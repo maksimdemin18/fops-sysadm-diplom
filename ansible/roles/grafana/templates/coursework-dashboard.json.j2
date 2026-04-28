@@ -1,0 +1,89 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Host availability",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "up{job=\"node_exporter\"}", "legendFormat": "{{host}}"}],
+      "options": {"reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""}, "orientation": "horizontal", "textMode": "name", "colorMode": "background", "graphMode": "none", "justifyMode": "auto"},
+      "fieldConfig": {"defaults": {"mappings": [{"type": "value", "options": {"0": {"text": "DOWN", "color": "red"}, "1": {"text": "UP", "color": "green"}}}], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}}
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU utilization (%)",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "100 - (avg by(host) (rate(node_cpu_seconds_total{mode=\"idle\",job=\"node_exporter\"}[5m])) * 100)", "legendFormat": "{{host}}"}],
+      "fieldConfig": {"defaults": {"unit": "percent", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 50}, {"color": "red", "value": 80}]}}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory utilization (%)",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "(1 - (node_memory_MemAvailable_bytes{job=\"node_exporter\"} / node_memory_MemTotal_bytes{job=\"node_exporter\"})) * 100", "legendFormat": "{{host}}"}],
+      "fieldConfig": {"defaults": {"unit": "percent", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 60}, {"color": "red", "value": 85}]}}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Disk utilization / (%)",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "100 * (1 - (node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\",job=\"node_exporter\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\",job=\"node_exporter\"}))", "legendFormat": "{{host}}"}],
+      "fieldConfig": {"defaults": {"unit": "percent", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 70}, {"color": "red", "value": 85}]}}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Disk read/write throughput (B/s)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "sum by(host) (rate(node_disk_read_bytes_total{job=\"node_exporter\"}[5m]))", "legendFormat": "{{host}} read"},
+        {"expr": "sum by(host) (rate(node_disk_written_bytes_total{job=\"node_exporter\"}[5m]))", "legendFormat": "{{host}} write"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "Bps"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Network throughput (B/s)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "sum by(host) (rate(node_network_receive_bytes_total{device!~\"lo\",job=\"node_exporter\"}[5m]) + rate(node_network_transmit_bytes_total{device!~\"lo\",job=\"node_exporter\"}[5m]))", "legendFormat": "{{host}}"}],
+      "fieldConfig": {"defaults": {"unit": "Bps"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP response count by status",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "sum by(host, status) (rate(nginx_http_response_count_total[5m]))", "legendFormat": "{{host}} status={{status}}"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP response size (B/s)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "sum by(host) (rate(nginx_http_response_size_bytes[5m]))", "legendFormat": "{{host}}"}],
+      "fieldConfig": {"defaults": {"unit": "Bps"}}
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["coursework", "devops", "yandex-cloud"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "{{ grafana_dashboard_title }}",
+  "uid": "{{ grafana_dashboard_uid }}",
+  "version": 1,
+  "weekStart": ""
+}

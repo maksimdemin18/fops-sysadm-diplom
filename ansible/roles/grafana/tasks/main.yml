@@ -1,0 +1,150 @@
+---
+- name: Install Grafana package dependencies
+  ansible.builtin.apt:
+    name:
+      - adduser
+      - libfontconfig1
+      - musl
+    state: present
+    update_cache: true
+
+- name: Wait until cloud-init is finished
+  ansible.builtin.shell: |
+    if command -v cloud-init >/dev/null 2>&1; then
+      cloud-init status --wait
+    else
+      exit 0
+    fi
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Wait for apt/dpkg locks to be released
+  ansible.builtin.shell: |
+    while fuser /var/lib/dpkg/lock >/dev/null 2>&1        || fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1        || fuser /var/cache/apt/archives/lock >/dev/null 2>&1; do
+      sleep 5
+    done
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Download Grafana deb package from Yandex mirror
+  ansible.builtin.get_url:
+    url: "{{ grafana_deb_url }}"
+    dest: "{{ grafana_deb_path }}"
+    mode: "0644"
+
+- name: Install Grafana from downloaded deb
+  ansible.builtin.apt:
+    deb: "{{ grafana_deb_path }}"
+    state: present
+    lock_timeout: 600
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: Ensure Grafana provisioning directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - /etc/grafana/provisioning
+    - /etc/grafana/provisioning/datasources
+    - /etc/grafana/provisioning/dashboards
+    - /var/lib/grafana/dashboards
+
+- name: Configure Grafana server address
+  ansible.builtin.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: server
+    option: http_addr
+    value: "0.0.0.0"
+    mode: "0644"
+  notify: Restart grafana
+
+- name: Configure Grafana server port
+  ansible.builtin.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: server
+    option: http_port
+    value: "{{ grafana_http_port }}"
+    mode: "0644"
+  notify: Restart grafana
+
+- name: Configure Grafana admin user
+  ansible.builtin.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: security
+    option: admin_user
+    value: "{{ grafana_admin_user }}"
+    mode: "0644"
+  notify: Restart grafana
+
+- name: Configure Grafana admin password
+  ansible.builtin.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: security
+    option: admin_password
+    value: "{{ grafana_admin_password }}"
+    mode: "0644"
+  notify: Restart grafana
+
+- name: Disable automatic plugin checks in Grafana
+  ansible.builtin.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: analytics
+    option: check_for_updates
+    value: "false"
+    mode: "0644"
+  notify: Restart grafana
+
+- name: Disable plugin catalog update checks
+  ansible.builtin.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: plugins
+    option: public_key_retrieval_disabled
+    value: "true"
+    mode: "0644"
+  notify: Restart grafana
+
+- name: Provision Prometheus datasource
+  ansible.builtin.template:
+    src: prometheus-datasource.yml.j2
+    dest: /etc/grafana/provisioning/datasources/prometheus.yml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart grafana
+
+- name: Provision dashboard provider
+  ansible.builtin.copy:
+    src: dashboards/dashboard-provider.yml
+    dest: /etc/grafana/provisioning/dashboards/default.yml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart grafana
+
+- name: Install coursework dashboard
+  ansible.builtin.template:
+    src: coursework-dashboard.json.j2
+    dest: /var/lib/grafana/dashboards/coursework-dashboard.json
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart grafana
+
+- name: Ensure grafana-server service is enabled and started
+  ansible.builtin.systemd:
+    name: grafana-server
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for Grafana web interface
+  ansible.builtin.wait_for:
+    port: 3000
+    host: 127.0.0.1
+    timeout: 120

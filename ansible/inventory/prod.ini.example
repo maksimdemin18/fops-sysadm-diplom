@@ -1,0 +1,21 @@
+[all:vars]
+ansible_user=ubuntu
+ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_private_key_file=/home/user/.ssh/id_ed25519
+ansible_ssh_common_args=-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o ProxyCommand="ssh -i /home/user/.ssh/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p ubuntu@203.0.113.10"
+
+[web]
+web-1 ansible_host=10.10.110.8 private_ip=10.10.110.8 role=web
+web-2 ansible_host=10.10.120.18 private_ip=10.10.120.18 role=web
+
+[prometheus_nodes]
+prometheus ansible_host=10.10.110.5 private_ip=10.10.110.5 role=prometheus
+
+[elasticsearch_nodes]
+elasticsearch ansible_host=10.10.110.6 private_ip=10.10.110.6 role=elasticsearch
+
+[grafana_nodes]
+grafana ansible_host=10.10.10.7 private_ip=10.10.10.7 public_ip=198.51.100.20 role=grafana
+
+[kibana_nodes]
+kibana ansible_host=10.10.20.26 private_ip=10.10.20.26 public_ip=198.51.100.30 role=kibana

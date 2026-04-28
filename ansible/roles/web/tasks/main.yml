@@ -1,0 +1,97 @@
+---
+- name: Install nginx and helpers
+  ansible.builtin.apt:
+    name:
+      - nginx
+      - tar
+    state: present
+
+- name: Create web root directory
+  ansible.builtin.file:
+    path: /var/www/coursework
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Deploy site content
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: /var/www/coursework/index.html
+    owner: www-data
+    group: www-data
+    mode: "0644"
+  notify: restart nginx
+
+- name: Remove default nginx index page if present
+  ansible.builtin.file:
+    path: /var/www/html/index.nginx-debian.html
+    state: absent
+  notify: restart nginx
+
+- name: Configure nginx virtual host
+  ansible.builtin.template:
+    src: site.conf.j2
+    dest: /etc/nginx/sites-available/coursework.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart nginx
+
+- name: Enable coursework site
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/coursework.conf
+    dest: /etc/nginx/sites-enabled/coursework.conf
+    state: link
+  notify: restart nginx
+
+- name: Disable default nginx site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: restart nginx
+
+- name: Create nginx log exporter user
+  ansible.builtin.user:
+    name: "{{ nginxlog_exporter_user }}"
+    shell: /usr/sbin/nologin
+    create_home: false
+    system: true
+
+- name: Download nginx log exporter package
+  ansible.builtin.get_url:
+    url: "https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v{{ nginxlog_exporter_version }}/prometheus-nginxlog-exporter_{{ nginxlog_exporter_version }}_linux_amd64.deb"
+    dest: /tmp/prometheus-nginxlog-exporter.deb
+    mode: "0644"
+
+- name: Install nginx log exporter package
+  ansible.builtin.apt:
+    deb: /tmp/prometheus-nginxlog-exporter.deb
+
+- name: Deploy nginx log exporter config
+  ansible.builtin.template:
+    src: prometheus-nginxlog-exporter.hcl.j2
+    dest: /etc/prometheus-nginxlog-exporter.hcl
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart nginxlog_exporter
+
+- name: Override nginx log exporter service
+  ansible.builtin.template:
+    src: prometheus-nginxlog-exporter.service.j2
+    dest: /etc/systemd/system/prometheus-nginxlog-exporter.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart nginxlog_exporter
+
+- name: Ensure services are enabled and started
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop:
+    - nginx
+    - prometheus-nginxlog-exporter

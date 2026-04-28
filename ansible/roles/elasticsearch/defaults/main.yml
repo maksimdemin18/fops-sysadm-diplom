@@ -1,0 +1,4 @@
+---
+elastic_stack_version: "8.19.14"
+elasticsearch_deb_url: "https://mirror.yandex.ru/mirrors/elastic/8/pool/main/e/elasticsearch/elasticsearch-{{ elastic_stack_version }}-amd64.deb"
+elasticsearch_deb_path: "/tmp/elasticsearch-{{ elastic_stack_version }}-amd64.deb"

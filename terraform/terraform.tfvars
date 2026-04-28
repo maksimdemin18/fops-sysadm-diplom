@@ -1,0 +1,6 @@
+cloud_id            = "тут надо"
+folder_id           = "и тут надо"
+zone                = "ru-central1-a"
+ssh_public_key_path = "~/.ssh/id_тттт.pub"
+private_key_path    = "~/.ssh/id_тттт"
+vm_user             = "ubuntu"

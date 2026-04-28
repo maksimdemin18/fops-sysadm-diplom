@@ -1,0 +1,65 @@
+---
+- name: Download Filebeat deb package from Yandex mirror
+  ansible.builtin.get_url:
+    url: "{{ filebeat_deb_url }}"
+    dest: "{{ filebeat_deb_path }}"
+    mode: "0644"
+
+- name: Wait until cloud-init is finished
+  ansible.builtin.shell: |
+    if command -v cloud-init >/dev/null 2>&1; then
+      cloud-init status --wait
+    else
+      exit 0
+    fi
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Wait for apt/dpkg locks to be released
+  ansible.builtin.shell: |
+    while fuser /var/lib/dpkg/lock >/dev/null 2>&1        || fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1        || fuser /var/cache/apt/archives/lock >/dev/null 2>&1; do
+      sleep 5
+    done
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Install Filebeat from downloaded deb
+  ansible.builtin.apt:
+    deb: "{{ filebeat_deb_path }}"
+    state: present
+    lock_timeout: 600
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: Ensure nginx module config exists
+  ansible.builtin.copy:
+    dest: /etc/filebeat/modules.d/nginx.yml
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      - module: nginx
+        access:
+          enabled: true
+          var.paths: ["/var/log/nginx/access.log"]
+        error:
+          enabled: true
+          var.paths: ["/var/log/nginx/error.log"]
+  notify: Restart filebeat
+
+- name: Deploy filebeat config
+  ansible.builtin.template:
+    src: filebeat.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart filebeat
+
+- name: Ensure filebeat service is enabled and started
+  ansible.builtin.systemd:
+    name: filebeat
+    enabled: true
+    state: started

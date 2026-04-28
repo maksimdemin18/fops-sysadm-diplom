@@ -1,0 +1,21 @@
+site_title: "DevOps Coursework"
+site_subtitle: "Отказоустойчивая инфраструктура статического сайта в Yandex Cloud"
+site_footer: "Netology / DevOps coursework"
+
+prometheus_version: "3.11.0"
+node_exporter_version: "1.10.2"
+nginxlog_exporter_version: "1.11.0"
+
+node_exporter_user: "node_exporter"
+prometheus_user: "prometheus"
+nginxlog_exporter_user: "prometheus-nginxlog-exporter"
+
+grafana_admin_user: "admin"
+grafana_admin_password: "admin"
+
+grafana_dashboard_uid: "coursework-overview"
+grafana_dashboard_title: "Coursework Infrastructure Overview"
+
+kibana_security_encryption_key: "change-me-coursework-kibana-security-key-32chars"
+kibana_saved_objects_encryption_key: "change-me-coursework-saved-objects-key"
+kibana_reporting_encryption_key: "change-me-coursework-reporting-key-32"

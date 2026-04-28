@@ -1,0 +1,62 @@
+---
+- name: Download Kibana deb package from Yandex mirror
+  ansible.builtin.get_url:
+    url: "{{ kibana_deb_url }}"
+    dest: "{{ kibana_deb_path }}"
+    mode: "0644"
+
+- name: Wait until cloud-init is finished
+  ansible.builtin.shell: |
+    if command -v cloud-init >/dev/null 2>&1; then
+      cloud-init status --wait
+    else
+      exit 0
+    fi
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Wait for apt/dpkg locks to be released
+  ansible.builtin.shell: |
+    while fuser /var/lib/dpkg/lock >/dev/null 2>&1        || fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1        || fuser /var/cache/apt/archives/lock >/dev/null 2>&1; do
+      sleep 5
+    done
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Install Kibana from downloaded deb
+  ansible.builtin.apt:
+    deb: "{{ kibana_deb_path }}"
+    state: present
+    lock_timeout: 600
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: Wait for Elasticsearch to become reachable
+  ansible.builtin.wait_for:
+    host: "{{ hostvars['elasticsearch'].private_ip }}"
+    port: 9200
+    timeout: 300
+
+- name: Deploy kibana.yml
+  ansible.builtin.template:
+    src: kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+    owner: root
+    group: kibana
+    mode: "0644"
+  notify: Restart kibana
+
+- name: Ensure kibana service is enabled and started
+  ansible.builtin.systemd:
+    name: kibana
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for Kibana port
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 5601
+    timeout: 300

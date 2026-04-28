@@ -1,0 +1,43 @@
+---
+- name: Ensure remote tmp directory exists
+  ansible.builtin.file:
+    path: /tmp/.ansible/tmp
+    state: directory
+    mode: "1777"
+
+- name: Wait until cloud-init is finished
+  ansible.builtin.shell: |
+    if command -v cloud-init >/dev/null 2>&1; then
+      cloud-init status --wait
+    else
+      exit 0
+    fi
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - wget
+      - unzip
+      - tar
+      - ca-certificates
+      - gnupg
+      - apt-transport-https
+      - software-properties-common
+      - python3-pip
+      - jq
+      - lsof
+      - acl
+    state: present
+
+- name: Set timezone to UTC
+  ansible.builtin.command: timedatectl set-timezone UTC
+  changed_when: false

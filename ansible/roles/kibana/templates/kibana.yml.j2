@@ -1,0 +1,16 @@
+server.port: 5601
+server.host: "0.0.0.0"
+server.name: "{{ inventory_hostname }}"
+{% if hostvars[inventory_hostname].public_ip is defined %}
+server.publicBaseUrl: "http://{{ hostvars[inventory_hostname].public_ip }}:5601"
+{% endif %}
+
+elasticsearch.hosts: ["http://{{ hostvars['elasticsearch'].private_ip }}:9200"]
+
+xpack.security.encryptionKey: "{{ kibana_security_encryption_key }}"
+xpack.encryptedSavedObjects.encryptionKey: "{{ kibana_saved_objects_encryption_key }}"
+xpack.reporting.encryptionKey: "{{ kibana_reporting_encryption_key }}"
+
+monitoring.ui.container.elasticsearch.enabled: true
+telemetry.enabled: false
+newsfeed.enabled: false

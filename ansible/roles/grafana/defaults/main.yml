@@ -1,0 +1,8 @@
+---
+grafana_version: "13.0.1"
+grafana_deb_url: "https://www.mirror.yandex.ru/mirrors/packages.grafana.com/enterprise/deb/pool/main/g/grafana/grafana_13.0.1_24542347077_linux_amd64.deb"
+grafana_deb_path: "/tmp/grafana_13.0.1_24542347077_linux_amd64.deb"
+
+grafana_admin_user: "admin"
+grafana_admin_password: "admin"
+grafana_http_port: 3000

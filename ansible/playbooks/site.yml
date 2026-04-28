@@ -1,0 +1,43 @@
+---
+- name: Base configuration on all managed hosts
+  hosts: web:prometheus_nodes:grafana_nodes:elasticsearch_nodes:kibana_nodes
+  become: true
+  pre_tasks:
+    - name: Wait for SSH to become ready
+      ansible.builtin.wait_for_connection:
+        delay: 5
+        timeout: 300
+  roles:
+    - common
+    - node_exporter
+
+- name: Configure web nodes
+  hosts: web
+  become: true
+  roles:
+    - web
+    - filebeat
+
+- name: Configure Prometheus
+  hosts: prometheus_nodes
+  become: true
+  roles:
+    - prometheus
+
+- name: Configure Elasticsearch
+  hosts: elasticsearch_nodes
+  become: true
+  roles:
+    - elasticsearch
+
+- name: Configure Kibana
+  hosts: kibana_nodes
+  become: true
+  roles:
+    - kibana
+
+- name: Configure Grafana
+  hosts: grafana_nodes
+  become: true
+  roles:
+    - grafana

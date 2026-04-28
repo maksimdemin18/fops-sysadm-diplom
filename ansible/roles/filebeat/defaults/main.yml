@@ -1,0 +1,4 @@
+---
+elastic_stack_version: "8.19.14"
+filebeat_deb_url: "https://mirror.yandex.ru/mirrors/elastic/8/pool/main/f/filebeat/filebeat-{{ elastic_stack_version }}-amd64.deb"
+filebeat_deb_path: "/tmp/filebeat-{{ elastic_stack_version }}-amd64.deb"

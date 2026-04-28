@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site_title }} - {{ inventory_hostname }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+    .wrap {
+      max-width: 860px;
+      margin: 60px auto;
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    h1 { margin-top: 0; }
+    .badge {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #e5f0ff;
+      color: #1d4ed8;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+    footer {
+      margin-top: 30px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="badge">Yandex Cloud / Terraform / Ansible</div>
+    <h1>{{ site_title }}</h1>
+    <p>{{ site_subtitle }}</p>
+
+    <table>
+      <tr><th>Параметр</th><th>Значение</th></tr>
+      <tr><td>Сервер</td><td>{{ inventory_hostname }}</td></tr>
+      <tr><td>IP-адрес</td><td>{{ ansible_host }}</td></tr>
+      <tr><td>Роль</td><td>Web server</td></tr>
+      <tr><td>Nginx</td><td>Запущен</td></tr>
+      <tr><td>Node Exporter</td><td>Порт 9100</td></tr>
+      <tr><td>Nginx Log Exporter</td><td>Порт 4040</td></tr>
+      <tr><td>Filebeat</td><td>Отправка логов в Elasticsearch</td></tr>
+    </table>
+
+    <footer>{{ site_footer }}</footer>
+  </div>
+</body>
+</html>
